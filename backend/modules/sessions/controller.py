@@ -1,17 +1,21 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from .service import create_session, list_sessions, join_session
 from modules.adjudicator.service import adjudicar_sesion
 
 router = APIRouter(prefix="/sesiones", tags=["sesiones"])
 
+
 class CrearSesionRequest(BaseModel):
     producto_id: str
     max_participantes: int
 
+
 class UnirseSesionRequest(BaseModel):
     sesion_id: str
     usuario_id: str
+
 
 @router.post("/crear")
 def crear_sesion(body: CrearSesionRequest):
@@ -21,9 +25,11 @@ def crear_sesion(body: CrearSesionRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.get("/listar")
 def listar_sesiones():
     return {"sesiones": list_sessions()}
+
 
 @router.post("/unirse")
 def unirse(body: UnirseSesionRequest):
@@ -33,6 +39,7 @@ def unirse(body: UnirseSesionRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/adjudicar/{sesion_id}")
 def adjudicar(sesion_id: str):
     try:
@@ -40,3 +47,4 @@ def adjudicar(sesion_id: str):
         return {"ok": True, **resultado}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
