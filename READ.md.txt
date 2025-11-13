@@ -1,0 +1,38 @@
+# The Platform Core (Compra Abierta SaaS)
+
+Plataforma descentralizada de compra colectiva determinista desarrollada por **The Platform Partnerships OÜ (Estonia)**.
+
+---
+
+## 🚀 Descripción
+
+**The Platform Core** es la infraestructura principal del ecosistema Compra Abierta.
+Gestiona los módulos de:
+- Usuarios y roles (multioperador)
+- Catálogo y sesiones de compra colectiva
+- Motor determinista de adjudicación
+- API Fintech PSD2
+- Logs, auditoría y sincronización entre países
+
+---
+
+## 🧩 Tecnologías Base
+
+| Componente | Stack |
+|-------------|-------|
+| Backend | Python 3.11 + FastAPI |
+| Frontend Admin | Streamlit |
+| Base de datos | Supabase (PostgreSQL) |
+| Seguridad | JWT + OAuth2 + bcrypt |
+| Despliegue | Render / Railway / Vercel |
+
+---
+
+## ⚙️ Instalación local
+
+```bash
+git clone https://github.com/openbuye/theplatform_core.git
+cd theplatform_core
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn backend.main:app --reload
