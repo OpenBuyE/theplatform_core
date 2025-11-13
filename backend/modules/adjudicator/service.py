@@ -1,28 +1,37 @@
 import hashlib
 from datetime import datetime
+
 from database.supabase_client import get_supabase
 from core.config import settings
+
 
 def adjudicar_sesion(sesion_id: str) -> dict:
     supabase = get_supabase()
 
-    sesion = supabase.table(settings.TABLE_SESIONES).select("*").eq("id", sesion_id).execute()
-    if not sesion.data:
+    sesion_res = supabase.table(settings.TABLE_SESIONES).select("*").eq("id", sesion_id).execute()
+    if not sesion_res.data:
         raise ValueError("Sesión no encontrada")
 
-    participantes = supabase.table(settings.TABLE_PARTICIPANTES).select("*").eq("sesion_id", sesion_id).execute().data
+    participantes = supabase.table(settings.TABLE_PARTICIPANTES) \
+        .select("*") \
+        .eq("sesion_id", sesion_id) \
+        .execute() \
+        .data
+
     if not participantes or len(participantes) == 0:
         raise ValueError("No hay participantes en la sesión")
 
-    # Semilla determinista: id_sesion + ids_participantes ordenados
+    # Orden determinista por usuario
     participantes_ordenados = sorted(participantes, key=lambda p: p["usuario_id"])
     concatenado_ids = "".join([p["usuario_id"] for p in participantes_ordenados])
-    semilla = sesion_id + concatenado_ids
 
+    semilla = f"{sesion_id}:{concatenado_ids}"
     hash_result = hashlib.sha256(semilla.encode()).hexdigest()
+
     ganador_index = int(hash_result, 16) % len(participantes_ordenados)
     ganador = participantes_ordenados[ganador_index]
 
+    # Actualizar sesión
     supabase.table(settings.TABLE_SESIONES).update(
         {
             "adjudicatario_id": ganador["usuario_id"],
@@ -31,6 +40,7 @@ def adjudicar_sesion(sesion_id: str) -> dict:
         }
     ).eq("id", sesion_id).execute()
 
+    # Registrar log
     supabase.table(settings.TABLE_LOGS).insert(
         {
             "accion": "adjudicacion",
@@ -41,5 +51,8 @@ def adjudicar_sesion(sesion_id: str) -> dict:
         }
     ).execute()
 
-    return {"ganador": ganador["usuario_id"], "hash": hash_result}
-
+    return {
+        "ganador_id": ganador["usuario_id"],
+        "hash": hash_result,
+        "num_participantes": len(participantes_ordenados),
+    }
