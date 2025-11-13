@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-# Cargar .env si existe (solo en local, en cloud se usan env vars)
-load_dotenv()
+load_dotenv()  # en local carga .env, en cloud usará env vars
 
 class Settings:
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
@@ -12,9 +11,9 @@ class Settings:
     ENV: str = os.getenv("ENV", "development")
 
     PROJECT_NAME: str = "The Platform Core API"
-    VERSION: str = "0.2-pro"
+    VERSION: str = "1.0.0"
 
-    # Tablas estándar en Supabase
+    # nombres de tablas esperadas en Supabase
     TABLE_USERS: str = "app_users_v2"
     TABLE_SESIONES: str = "sesiones_v2"
     TABLE_PARTICIPANTES: str = "participantes_v2"
@@ -22,3 +21,4 @@ class Settings:
     TABLE_LOGS: str = "logs_v2"
 
 settings = Settings()
+
