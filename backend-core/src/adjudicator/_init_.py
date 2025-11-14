@@ -1,0 +1,1 @@
+# Paquete de adjudicación determinista
