@@ -1,0 +1,4 @@
+pydantic
+supabase
+python-dotenv
+requests
