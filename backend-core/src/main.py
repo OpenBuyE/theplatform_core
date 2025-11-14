@@ -19,6 +19,18 @@ def startup_event():
 
 
 @app.get("/health")
+from fastapi import HTTPException
+from adjudicator.models import AdjudicationInput
+from adjudicator.engine import adjudicate_session
+
+@app.post("/adjudicate")
+def adjudicate(input_data: AdjudicationInput):
+    try:
+        result = adjudicate_session(input_data)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 def health_check():
     return {
         "status": "ok",
