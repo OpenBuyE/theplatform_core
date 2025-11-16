@@ -1,1 +1,2 @@
-# vacío o con un simple comentario
+theplatform_core/backend-core/dashboard/ui/__init__.py
+
