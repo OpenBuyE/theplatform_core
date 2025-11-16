@@ -1,8 +1,8 @@
 import streamlit as st
-from .ui.layout import setup_page, render_header, render_sidebar
-from .views.park_sessions import render_park_sessions
-from .views.active_sessions import render_active_sessions
-from .views.chains import render_chains
+from dashboard.ui.layout import setup_page, render_header, render_sidebar
+from dashboard.views.park_sessions import render_park_sessions
+from dashboard.views.active_sessions import render_active_sessions
+from dashboard.views.chains import render_chains
 # (cuando los tengas): from .views.scheduled import render_scheduled
 # ...
 
