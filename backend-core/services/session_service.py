@@ -3,6 +3,7 @@ from typing import List
 
 from services.database import DatabaseService
 from services.adjudication_service import AdjudicationService
+from services.session_pool_service import SessionPoolService
 
 
 class SessionService:
@@ -12,11 +13,13 @@ class SessionService:
     - Cerrar automáticamente las sesiones válidas (status = 'complete').
     - Lanzar el motor de adjudicación determinista.
     - Marcar sesiones caducadas (status = 'expired') si no alcanzan el aforo.
+    - Encadenar sesiones (X23.1 → X23.2 → X23.3…) a partir del sessions_pool.
     """
 
     def __init__(self):
         self.db = DatabaseService()
         self.adjudication_service = AdjudicationService()
+        self.pool = SessionPoolService()
 
     def _get_open_sessions(self) -> List[dict]:
         """
@@ -33,7 +36,6 @@ class SessionService:
         if not expiry_ts:
             return False  # si no hay caducidad definida, no se considera expirada
 
-        # Supabase devuelve normalmente ISO8601, lo parseamos
         if isinstance(expiry_ts, str):
             expiry_dt = datetime.fromisoformat(expiry_ts.replace("Z", "+00:00"))
         else:
@@ -45,8 +47,7 @@ class SessionService:
     def _is_session_full(self, session: dict) -> bool:
         """
         Comprueba si el número de participantes alcanza o supera max_participants.
-        En el modelo actual, asumimos que cada fila en participants corresponde
-        a una preautorización ya confirmada por la Fintech.
+        Cada fila en participants corresponde a un participante con pago preautorizado OK.
         """
         session_id = session["id"]
         max_participants = session["max_participants"]
@@ -79,16 +80,15 @@ class SessionService:
             session_id,
             {"status": "expired"}
         )
-        # Aquí, en producción, deberíamos notificar a la Fintech para
-        # que libere/ignore/caducan las preautorizaciones asociadas.
+        # Aquí, en producción, deberíamos notificar a la Fintech para que
+        # libere/ignore/caducen las preautorizaciones asociadas.
 
     def process_open_sessions(self):
         """
-        Lógica principal:
-        - Recorre todas las sesiones 'open'.
-        - Si alguna ha caducado sin aforo completo → status = 'expired'.
-        - Si alguna está completa (aforo alcanzado dentro de plazo) →
-          la cierra y lanza el motor determinista.
+        Lógica principal para sesiones 'open':
+        - Si una sesión ha caducado sin aforo completo → status = 'expired'.
+        - Si una sesión aún está dentro de plazo y el aforo está completo →
+          se cierra (complete) y se adjudica automáticamente.
         """
         open_sessions = self._get_open_sessions()
         for session in open_sessions:
@@ -102,3 +102,22 @@ class SessionService:
             if self._is_session_full(session):
                 self._close_session(session)
                 self.adjudication_service.adjudicate(session["id"])
+
+    def _get_adjudicated_sessions(self) -> List[dict]:
+        """
+        Recupera sesiones ya adjudicadas (ganador decidido),
+        candidatas a encadenar (crear la siguiente X23.2).
+        """
+        result = self.db.fetch_by_field("sessions", "status", "adjudicated")
+        return result.data or []
+
+    def process_chains_for_adjudicated_sessions(self):
+        """
+        Para cada sesión 'adjudicated' que pertenece a una cadena (chain_group_id),
+        intenta crear la siguiente sesión a partir de sessions_pool.
+        (X23.1 → X23.2 → X23.3...)
+        """
+        adjudicated = self._get_adjudicated_sessions()
+        for session in adjudicated:
+            self.pool.create_next_session_in_chain_if_needed(session)
+
