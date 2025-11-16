@@ -1,4 +1,3 @@
-import streamlit as st
 from dashboard.ui.layout import setup_page, render_header, render_sidebar
 from dashboard.views.park_sessions import render_park_sessions
 from dashboard.views.active_sessions import render_active_sessions
