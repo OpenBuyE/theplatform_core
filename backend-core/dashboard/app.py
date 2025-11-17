@@ -1,10 +1,10 @@
 import streamlit as st
 
 # 🟩 IMPORTS ABSOLUTOS (CORRECTOS)
-from dashboard.ui.layout import setup_page, render_header, render_sidebar
-from dashboard.views.park_sessions import render_park_sessions
-from dashboard.views.active_sessions import render_active_sessions
-from dashboard.views.chains import render_chains
+from backend_core.dashboard.ui.layout import setup_page, render_header, render_sidebar
+from backend_core.dashboard.views.park_sessions import render_park_sessions
+from backend_core.dashboard.views.active_sessions import render_active_sessions
+from backend_core.dashboard.views.chains import render_chains
 
 
 def main():
